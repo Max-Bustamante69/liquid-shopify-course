@@ -1,0 +1,30 @@
+{
+    "sections" : {
+        "template": {
+            "type": "template-cart",
+            "blocks": {
+                "subtotal": {
+                    "type": "subtotal",
+                    "name": "Subtotal"
+                },
+                "update-button": {
+                    "type": "update_button",
+                    "name": "Update Button"
+                },
+                "checkout-button": {
+                    "type": "checkout_button",
+                    "name": "Checkout Button"
+                }
+                
+            },
+            "block_order": [
+                "subtotal",
+                "update-button",
+                "checkout-button"
+            ],
+        }
+    },
+    "order": [
+        "template"
+    ]
+}
