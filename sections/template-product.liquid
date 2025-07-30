@@ -84,7 +84,7 @@
             {% when 'variant_selector' %}
               <div class="my-3" {{ block.shopify_attributes }}>
                 {% unless product.has_only_default_variant %}
-                  <div data-url="{{ product.url }}" data-section="{{ section.id }}">
+                  <variant-selector data-url="{{ product.url }}" data-section="{{ section.id }}">
                     {% for option in product.options_with_values %}
                       <label for="Option-{{ section.id }}-{{ forloop.index0 }}">{{ option.name }}</label>
                       <div class="my-2">
@@ -106,7 +106,7 @@
                         </select>
                       </div>
                     {% endfor %}
-                  </div>
+                  </variant-selector>
                 {% endunless %}
               </div>
             {% when 'quantity' %}
@@ -132,7 +132,9 @@
             {% when 'checkout_button' %}
               <div class="my-3" {{ block.shopify_attributes }}>
                 <button
-                  {% unless selected_variant.available %}disabled{% endunless %}
+                  {% unless selected_variant.available %}
+                    disabled
+                  {% endunless %}
                   type="submit"
                   name="add"
                   class="w-full px-6 py-4 bg-gray-900 text-white hover:bg-color-gray-700 rounded-sm"
@@ -145,11 +147,62 @@
                 </button>
               </div>
           {% endcase %}
+          <script type="application/json">
+            {{product.variants | json }}
+          </script>
         {% endfor %}
       {% endform %}
     </div>
   </div>
 </div>
+
+<script>
+  class VariantSelector extends HTMLElement {
+    constructor() {
+      super();
+      this.addEventListener('change', this.onVariantChange.bind(this));
+    }
+
+    onVariantChange() {
+      this.getSelectedOptions();
+    }
+
+    getSelectedOptions() {
+      const selectedOptions = Array.from(this.querySelectorAll('select'), (select) => select.value);
+      console.log('Selected options:', selectedOptions);
+    }
+
+    getVariantJson() {
+      this.variantData =
+        this.variantData || JSON.parse(this.querySelector('script[type="application/json"]').textContent);
+      return this.variantData;
+    }
+
+    getSelectedVariant() {
+      this.currentVariant = this.getVariantJson().find((variant) => {
+        const findings = !variant.variant.options
+          .map((option, index) => {
+            return this.options[index] === option;
+          })
+          .includes(false);
+        if (findings) {
+          return variant;
+        }
+      });
+    }
+
+
+    updateUrl(){
+      if(!this.currentVariant) return;
+
+      window.history.replaceState({}, ``, `${this.dataset.url}?variant=${this.currentVariant.id}`);
+    }
+
+
+  }
+
+  customElements.define('variant-selector', VariantSelector);
+</script>
 
 <script>
   const swiper = new Swiper('.swiper', {
@@ -193,16 +246,15 @@
       "limit": 1
     },
     {
-        "type": "quantity",
-        "name": "Quantity",
-        "limit": 1
+      "type": "quantity",
+      "name": "Quantity",
+      "limit": 1
     },
     {
       "type": "description",
       "name": "Description",
       "limit": 1
     },
-
 
     {
       "type": "checkout_button",
